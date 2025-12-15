@@ -1,0 +1,831 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Fishing Game</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: Arial, sans-serif;
+            background: linear-gradient(to bottom, #001a33 0%, #003d5c 100%);
+            height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            overflow: hidden;
+        }
+        
+        #gameContainer {
+            width: 800px;
+            height: 600px;
+            background: linear-gradient(to bottom, #0a1f3d 0%, #1a4d6e 30%, #0d2847 70%, #051629 100%);
+            border: 5px solid #1a3a52;
+            border-radius: 10px;
+            position: relative;
+            overflow: hidden;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.5), inset 0 0 50px rgba(26, 77, 110, 0.3);
+        }
+        
+        #water {
+            position: absolute;
+            bottom: 0;
+            width: 100%;
+            height: 100%;
+            background: radial-gradient(ellipse at center, rgba(26, 77, 110, 0.4) 0%, rgba(5, 22, 41, 0.8) 70%);
+            animation: waterFlow 8s ease-in-out infinite;
+        }
+        
+        @keyframes waterFlow {
+            0%, 100% { opacity: 0.7; }
+            50% { opacity: 0.9; }
+        }
+        
+        .bubble {
+            position: absolute;
+            background: radial-gradient(circle at 30% 30%, rgba(255,255,255,0.8), rgba(100,180,220,0.4));
+            border-radius: 50%;
+            animation: rise linear infinite;
+            opacity: 0.6;
+        }
+        
+        @keyframes rise {
+            0% {
+                transform: translateY(0) translateX(0);
+                opacity: 0;
+            }
+            10% {
+                opacity: 0.6;
+            }
+            90% {
+                opacity: 0.6;
+            }
+            100% {
+                transform: translateY(-600px) translateX(50px);
+                opacity: 0;
+            }
+        }
+        
+        #boat {
+            position: absolute;
+            top: 25%;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 120px;
+            height: 60px;
+            background: rgba(60, 40, 30, 0.6);
+            border-radius: 0 0 50% 50%;
+            z-index: 10;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.5);
+        }
+        
+        #fishingLine {
+            position: absolute;
+            top: 30%;
+            left: 50%;
+            width: 3px;
+            background: #333;
+            transform-origin: top;
+            transition: height 0.3s;
+            z-index: 5;
+            height: 0;
+        }
+        
+        #hook {
+            position: absolute;
+            width: 30px;
+            height: 30px;
+            left: 50%;
+            transform: translateX(-50%);
+            transition: top 0.3s;
+            z-index: 5;
+            top: 30%;
+            margin-top: -15px;
+        }
+        
+        #hook::before {
+            content: '';
+            position: absolute;
+            width: 15px;
+            height: 20px;
+            border: 3px solid #C0C0C0;
+            border-top: none;
+            border-left: none;
+            border-radius: 0 0 15px 0;
+            left: 50%;
+            transform: translateX(-50%) rotate(45deg);
+        }
+        
+        #hook::after {
+            content: '';
+            position: absolute;
+            width: 8px;
+            height: 8px;
+            background: #FFD700;
+            border-radius: 50%;
+            left: 50%;
+            top: -5px;
+            transform: translateX(-50%);
+        }
+        
+        .fish {
+            position: absolute;
+            width: 50px;
+            height: 30px;
+            background: linear-gradient(135deg, #ff6b9d 0%, #c94277 50%, #ff6b9d 100%);
+            border-radius: 50% 50% 50% 50%;
+            z-index: 3;
+            filter: drop-shadow(0 0 8px rgba(255, 107, 157, 0.6));
+            animation: fishGlow 2s ease-in-out infinite;
+            pointer-events: none;
+        }
+        
+        @keyframes fishGlow {
+            0%, 100% { filter: drop-shadow(0 0 8px rgba(255, 107, 157, 0.6)); }
+            50% { filter: drop-shadow(0 0 15px rgba(255, 107, 157, 0.9)); }
+        }
+        
+        .fish::before {
+            content: '';
+            position: absolute;
+            right: -15px;
+            top: 50%;
+            transform: translateY(-50%);
+            width: 0;
+            height: 0;
+            border-left: 20px solid #c94277;
+            border-top: 15px solid transparent;
+            border-bottom: 15px solid transparent;
+        }
+        
+        .fish::after {
+            content: '';
+            position: absolute;
+            left: 10px;
+            top: 8px;
+            width: 6px;
+            height: 6px;
+            background: rgba(255,255,255,0.9);
+            border-radius: 50%;
+            border: 1px solid rgba(0,0,0,0.3);
+            box-shadow: 0 0 5px rgba(255,255,255,0.8);
+        }
+        
+        #scoreBoard {
+            position: absolute;
+            top: 20px;
+            left: 20px;
+            background: rgba(10, 31, 61, 0.85);
+            padding: 15px 25px;
+            border-radius: 10px;
+            font-size: 20px;
+            font-weight: bold;
+            color: #6ec9e0;
+            z-index: 20;
+            border: 2px solid rgba(110, 201, 224, 0.5);
+            box-shadow: 0 0 20px rgba(110, 201, 224, 0.3);
+        }
+        
+        #instructions {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            background: rgba(10, 31, 61, 0.85);
+            padding: 15px;
+            border-radius: 10px;
+            font-size: 14px;
+            max-width: 200px;
+            z-index: 20;
+            color: #6ec9e0;
+            border: 2px solid rgba(110, 201, 224, 0.5);
+            box-shadow: 0 0 20px rgba(110, 201, 224, 0.3);
+        }
+        
+        #castButton {
+            position: absolute;
+            bottom: 30px;
+            left: 50%;
+            transform: translateX(-50%);
+            padding: 15px 30px;
+            font-size: 18px;
+            background: rgba(26, 77, 110, 0.9);
+            color: #6ec9e0;
+            border: 2px solid rgba(110, 201, 224, 0.6);
+            border-radius: 5px;
+            cursor: pointer;
+            z-index: 20;
+            transition: all 0.3s;
+            box-shadow: 0 0 20px rgba(110, 201, 224, 0.4);
+            font-weight: bold;
+            min-width: 150px;
+        }
+        
+        #castButton:hover:not(:disabled) {
+            background: rgba(26, 77, 110, 1);
+            box-shadow: 0 0 30px rgba(110, 201, 224, 0.6);
+        }
+        
+        #castButton:disabled {
+            background: rgba(26, 77, 110, 0.5);
+            cursor: not-allowed;
+            box-shadow: none;
+            color: rgba(110, 201, 224, 0.5);
+        }
+        
+        .caught {
+            animation: catchAnimation 0.5s ease-out;
+        }
+        
+        @keyframes catchAnimation {
+            0% { transform: scale(1) rotate(0deg); }
+            50% { transform: scale(1.3) rotate(180deg); }
+            100% { transform: scale(0) rotate(360deg); }
+        }
+        
+        .shark {
+            position: absolute;
+            width: 100px;
+            height: 50px;
+            background: linear-gradient(135deg, #4a5568 0%, #2d3748 50%, #4a5568 100%);
+            border-radius: 50% 50% 50% 50%;
+            z-index: 3;
+            filter: drop-shadow(0 0 12px rgba(255, 0, 0, 0.5));
+            animation: sharkGlow 2s ease-in-out infinite;
+            pointer-events: none;
+        }
+        
+        @keyframes sharkGlow {
+            0%, 100% { filter: drop-shadow(0 0 12px rgba(255, 0, 0, 0.5)); }
+            50% { filter: drop-shadow(0 0 20px rgba(255, 0, 0, 0.8)); }
+        }
+        
+        .shark::before {
+            content: '';
+            position: absolute;
+            right: -30px;
+            top: 50%;
+            transform: translateY(-50%);
+            width: 0;
+            height: 0;
+            border-left: 40px solid #2d3748;
+            border-top: 25px solid transparent;
+            border-bottom: 25px solid transparent;
+        }
+        
+        .shark::after {
+            content: '';
+            position: absolute;
+            left: 15px;
+            top: 12px;
+            width: 8px;
+            height: 8px;
+            background: rgba(255, 0, 0, 0.9);
+            border-radius: 50%;
+            box-shadow: 0 0 8px rgba(255, 0, 0, 0.8);
+        }
+        
+        .shark-fin {
+            position: absolute;
+            top: -15px;
+            left: 30%;
+            width: 0;
+            height: 0;
+            border-left: 15px solid transparent;
+            border-right: 15px solid transparent;
+            border-bottom: 20px solid #4a5568;
+        }
+        
+        #gameOverModal {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.8);
+            display: none;
+            justify-content: center;
+            align-items: center;
+            z-index: 100;
+        }
+        
+        #gameOverContent {
+            background: linear-gradient(135deg, #0a1f3d 0%, #1a4d6e 100%);
+            padding: 40px 60px;
+            border-radius: 20px;
+            text-align: center;
+            border: 3px solid rgba(110, 201, 224, 0.6);
+            box-shadow: 0 0 40px rgba(110, 201, 224, 0.5);
+        }
+        
+        #gameOverContent h2 {
+            color: #6ec9e0;
+            font-size: 36px;
+            margin-bottom: 20px;
+            text-shadow: 0 0 20px rgba(110, 201, 224, 0.8);
+        }
+        
+        #gameOverContent p {
+            color: #6ec9e0;
+            font-size: 24px;
+            margin-bottom: 30px;
+        }
+        
+        #playAgainButton {
+            padding: 15px 40px;
+            font-size: 20px;
+            background: rgba(26, 77, 110, 0.9);
+            color: #6ec9e0;
+            border: 2px solid rgba(110, 201, 224, 0.6);
+            border-radius: 10px;
+            cursor: pointer;
+            font-weight: bold;
+            box-shadow: 0 0 20px rgba(110, 201, 224, 0.4);
+            transition: all 0.3s;
+        }
+        
+        #playAgainButton:hover {
+            background: rgba(26, 77, 110, 1);
+            box-shadow: 0 0 30px rgba(110, 201, 224, 0.6);
+            transform: scale(1.05);
+        }
+    </style>
+</head>
+<body>
+    <div id="gameContainer">
+        <div id="scoreBoard">
+            Fish Caught: <span id="score">0</span><br>
+            Time: <span id="timer">25</span>s<br>
+            <span id="previousScore" style="opacity: 0.7; font-size: 16px;">Last Score: 0</span>
+        </div>
+        <div id="instructions">
+            Click "Cast Line" to fish!<br>
+            Click on fish near the hook to catch them.
+        </div>
+        
+        <div id="boat"></div>
+        <div id="fishingLine"></div>
+        <div id="hook"></div>
+        <div id="water"></div>
+        
+        <button id="castButton">Cast Line</button>
+    </div>
+    
+    <div id="gameOverModal">
+        <div id="gameOverContent">
+            <h2>🎣 Game Over! 🎣</h2>
+            <p>You caught <span id="finalScore">0</span> fish!</p>
+            <button id="playAgainButton">Play Again</button>
+        </div>
+    </div>
+
+    <script>
+        let score = 0;
+        let isFishing = false;
+        let fishArray = [];
+        let animationId = null;
+        let gameTime = 25;
+        let timerInterval = null;
+        let gameOver = false;
+        let audioContext = null;
+        let masterGain = null;
+        let previousScore = 0;
+        let fishSpawnInterval = null;
+        let sharkSpawnInterval = null;
+        
+        const hook = document.getElementById('hook');
+        const fishingLine = document.getElementById('fishingLine');
+        const castButton = document.getElementById('castButton');
+        const scoreDisplay = document.getElementById('score');
+        const gameContainer = document.getElementById('gameContainer');
+        const gameOverModal = document.getElementById('gameOverModal');
+        const playAgainButton = document.getElementById('playAgainButton');
+        const finalScoreDisplay = document.getElementById('finalScore');
+        const previousScoreDisplay = document.getElementById('previousScore');
+        
+        playAgainButton.addEventListener('click', resetGame);
+        
+        // Initialize ambient underwater sounds
+        function initAudio() {
+            if (audioContext) return;
+            
+            audioContext = new (window.AudioContext || window.webkitAudioContext)();
+            masterGain = audioContext.createGain();
+            masterGain.gain.value = 0.3;
+            masterGain.connect(audioContext.destination);
+            
+            // Create ambient layers
+            createAmbientDrone();
+            createMelodyLayer();
+            createArpeggio();
+        }
+        
+        function createAmbientDrone() {
+            // Removed constant hum - music is now just melody and arpeggio
+        }
+        
+        function createMelodyLayer() {
+            const notes = [523, 587, 659, 587, 523, 440]; // Happy, uplifting melody in C major
+            let noteIndex = 0;
+            
+            function playNote() {
+                const osc = audioContext.createOscillator();
+                const gain = audioContext.createGain();
+                const filter = audioContext.createBiquadFilter();
+                
+                osc.type = 'sine';
+                osc.frequency.value = notes[noteIndex];
+                
+                filter.type = 'lowpass';
+                filter.frequency.value = 2000;
+                filter.Q.value = 1;
+                
+                gain.gain.value = 0;
+                gain.gain.setValueAtTime(0, audioContext.currentTime);
+                gain.gain.linearRampToValueAtTime(0.12, audioContext.currentTime + 0.1);
+                gain.gain.linearRampToValueAtTime(0.08, audioContext.currentTime + 1.5);
+                gain.gain.exponentialRampToValueAtTime(0.001, audioContext.currentTime + 2.5);
+                
+                osc.connect(filter);
+                filter.connect(gain);
+                gain.connect(masterGain);
+                
+                osc.start(audioContext.currentTime);
+                osc.stop(audioContext.currentTime + 2.5);
+                
+                noteIndex = (noteIndex + 1) % notes.length;
+                setTimeout(playNote, 2500);
+            }
+            
+            setTimeout(playNote, 500);
+        }
+        
+        function createArpeggio() {
+            const chordNotes = [659, 523, 392]; // Bright arpeggio
+            let noteIndex = 0;
+            
+            function playArp() {
+                const osc = audioContext.createOscillator();
+                const gain = audioContext.createGain();
+                const filter = audioContext.createBiquadFilter();
+                
+                osc.type = 'sine';
+                osc.frequency.value = chordNotes[noteIndex];
+                
+                filter.type = 'lowpass';
+                filter.frequency.value = 3000;
+                
+                gain.gain.value = 0;
+                gain.gain.setValueAtTime(0, audioContext.currentTime);
+                gain.gain.linearRampToValueAtTime(0.06, audioContext.currentTime + 0.02);
+                gain.gain.exponentialRampToValueAtTime(0.001, audioContext.currentTime + 0.4);
+                
+                osc.connect(filter);
+                filter.connect(gain);
+                gain.connect(masterGain);
+                
+                osc.start(audioContext.currentTime);
+                osc.stop(audioContext.currentTime + 0.4);
+                
+                noteIndex = (noteIndex + 1) % chordNotes.length;
+                setTimeout(playArp, 600);
+            }
+            
+            setTimeout(playArp, 1200);
+        }
+        
+        function createBubbleSound() {
+            // Removed - no longer needed
+        }
+        
+        castButton.addEventListener('click', () => {
+            initAudio();
+            if (!isFishing) {
+                castLine();
+            } else {
+                reelIn();
+            }
+        });
+        
+        // Create bubbles for atmosphere
+        function createBubbles() {
+            setInterval(() => {
+                const bubble = document.createElement('div');
+                bubble.className = 'bubble';
+                const size = 5 + Math.random() * 15;
+                bubble.style.width = size + 'px';
+                bubble.style.height = size + 'px';
+                bubble.style.left = Math.random() * 800 + 'px';
+                bubble.style.bottom = '0px';
+                bubble.style.animationDuration = (3 + Math.random() * 4) + 's';
+                gameContainer.appendChild(bubble);
+                
+                setTimeout(() => bubble.remove(), 8000);
+            }, 500);
+        }
+        
+        createBubbles();
+        
+        function castLine() {
+            if (isFishing || gameOver) return;
+            
+            if (gameTime === 25) {
+                startTimer();
+                startFishSpawning();
+                startSharkSpawning();
+            }
+            
+            isFishing = true;
+            castButton.textContent = 'Reel In!';
+            
+            // Lower the hook - position it at the end of the line
+            const lineHeight = 250;
+            fishingLine.style.height = lineHeight + 'px';
+            hook.style.top = (0.30 * 600 + lineHeight) + 'px';
+            
+            // Start animation loop
+            animateFish();
+        }
+        
+        function startFishSpawning() {
+            // Spawn initial batch
+            spawnFish(3);
+            
+            // Spawn new fish every 3 seconds
+            fishSpawnInterval = setInterval(() => {
+                if (!gameOver) {
+                    spawnFish(2);
+                }
+            }, 3000);
+        }
+        
+        function startSharkSpawning() {
+            // Spawn first shark after 5 seconds
+            setTimeout(() => {
+                if (!gameOver) {
+                    console.log('Spawning first shark');
+                    spawnShark();
+                }
+            }, 5000);
+            
+            // Spawn sharks every 7 seconds after that
+            sharkSpawnInterval = setInterval(() => {
+                if (!gameOver) {
+                    console.log('Spawning shark from interval');
+                    spawnShark();
+                }
+            }, 7000);
+        }
+        
+        function spawnShark() {
+            const shark = document.createElement('div');
+            shark.className = 'shark';
+            shark.dataset.type = 'shark';
+            
+            const fin = document.createElement('div');
+            fin.className = 'shark-fin';
+            shark.appendChild(fin);
+            
+            const startX = Math.random() < 0.5 ? -120 : 920;
+            const y = 340 + Math.random() * 160;
+            const speed = 1.5 + Math.random() * 1;
+            const direction = startX < 0 ? 1 : -1;
+            
+            shark.style.left = startX + 'px';
+            shark.style.top = y + 'px';
+            
+            // Flip shark if swimming right to left
+            if (direction === -1) {
+                shark.style.transform = 'scaleX(-1)';
+            }
+            
+            gameContainer.appendChild(shark);
+            fishArray.push({
+                element: shark, 
+                speed: speed, 
+                direction: direction,
+                x: startX,
+                y: y,
+                isShark: true
+            });
+        }
+        
+        function spawnFish(count) {
+            const colors = [
+                'linear-gradient(135deg, #ff6b9d 0%, #c94277 50%, #ff6b9d 100%)',
+                'linear-gradient(135deg, #4ecdc4 0%, #2d8a82 50%, #4ecdc4 100%)',
+                'linear-gradient(135deg, #ffd93d 0%, #c7a82d 50%, #ffd93d 100%)',
+                'linear-gradient(135deg, #a29bfe 0%, #6c5ce7 50%, #a29bfe 100%)',
+                'linear-gradient(135deg, #fd79a8 0%, #e84393 50%, #fd79a8 100%)'
+            ];
+            
+            const glowColors = [
+                'rgba(255, 107, 157, 0.6)',
+                'rgba(78, 205, 196, 0.6)',
+                'rgba(255, 217, 61, 0.6)',
+                'rgba(162, 155, 254, 0.6)',
+                'rgba(253, 121, 168, 0.6)'
+            ];
+            
+            for (let i = 0; i < count; i++) {
+                const fish = document.createElement('div');
+                fish.className = 'fish';
+                const colorIndex = Math.floor(Math.random() * colors.length);
+                fish.style.background = colors[colorIndex];
+                fish.style.filter = `drop-shadow(0 0 8px ${glowColors[colorIndex]})`;
+                
+                const startX = Math.random() < 0.5 ? -60 : 860;
+                const y = 320 + Math.random() * 180;
+                const speed = 2 + Math.random() * 2;
+                const direction = startX < 0 ? 1 : -1;
+                
+                fish.style.left = startX + 'px';
+                fish.style.top = y + 'px';
+                
+                // Flip fish if swimming right to left
+                if (direction === -1) {
+                    fish.style.transform = 'scaleX(-1)';
+                }
+                
+                gameContainer.appendChild(fish);
+                fishArray.push({
+                    element: fish, 
+                    speed: speed, 
+                    direction: direction,
+                    x: startX,
+                    y: y
+                });
+            }
+        }
+        
+        function animateFish() {
+            fishArray.forEach((fishObj, index) => {
+                fishObj.x += fishObj.speed * fishObj.direction;
+                
+                const maxX = fishObj.isShark ? -150 : -100;
+                const minX = fishObj.isShark ? 950 : 900;
+                
+                if (fishObj.x < maxX || fishObj.x > minX) {
+                    fishObj.element.remove();
+                    fishArray.splice(index, 1);
+                } else {
+                    fishObj.element.style.left = fishObj.x + 'px';
+                }
+            });
+            
+            if (isFishing || fishArray.length > 0) {
+                animationId = requestAnimationFrame(animateFish);
+            }
+        }
+        
+        function catchFish(fish) {
+            if (!isFishing) return;
+            
+            const hookRect = hook.getBoundingClientRect();
+            const fishRect = fish.getBoundingClientRect();
+            
+            const distance = Math.sqrt(
+                Math.pow(hookRect.left - fishRect.left, 2) + 
+                Math.pow(hookRect.top - fishRect.top, 2)
+            );
+            
+            if (distance < 120) {
+                score++;
+                scoreDisplay.textContent = score;
+                fish.classList.add('caught');
+                
+                const index = fishArray.findIndex(f => f.element === fish);
+                if (index > -1) fishArray.splice(index, 1);
+                
+                setTimeout(() => fish.remove(), 500);
+            }
+        }
+        
+        function reelIn() {
+            if (!isFishing) return;
+            
+            // Check for fish near the hook
+            const hookRect = hook.getBoundingClientRect();
+            const catchRadius = 120;
+            let fishCaught = 0;
+            
+            fishArray.forEach((fishObj, index) => {
+                const fishRect = fishObj.element.getBoundingClientRect();
+                
+                const distance = Math.sqrt(
+                    Math.pow(hookRect.left - fishRect.left, 2) + 
+                    Math.pow(hookRect.top - fishRect.top, 2)
+                );
+                
+                if (distance < catchRadius) {
+                    if (fishObj.isShark) {
+                        // Caught a shark - lose 3 points
+                        score = Math.max(0, score - 3);
+                    } else {
+                        // Caught a regular fish - gain 1 point
+                        score++;
+                    }
+                    fishCaught++;
+                    fishObj.element.classList.add('caught');
+                    
+                    setTimeout(() => fishObj.element.remove(), 500);
+                    fishArray[index] = null; // Mark for removal
+                }
+            });
+            
+            // Remove caught fish from array
+            fishArray = fishArray.filter(f => f !== null);
+            
+            // Update score display
+            scoreDisplay.textContent = score;
+            
+            // Reel up the line
+            fishingLine.style.height = '0px';
+            hook.style.top = '30%';
+            isFishing = false;
+            castButton.textContent = 'Cast Line';
+        }
+        
+        function startTimer() {
+            const timerDisplay = document.getElementById('timer');
+            timerInterval = setInterval(() => {
+                gameTime--;
+                timerDisplay.textContent = gameTime;
+                
+                if (gameTime <= 0) {
+                    endGame();
+                }
+            }, 1000);
+        }
+        
+        function endGame() {
+            gameOver = true;
+            clearInterval(timerInterval);
+            clearInterval(fishSpawnInterval);
+            clearInterval(sharkSpawnInterval);
+            castButton.disabled = true;
+            castButton.textContent = 'Game Over!';
+            
+            fishArray.forEach(fishObj => {
+                fishObj.element.remove();
+            });
+            fishArray = [];
+            
+            if (animationId) {
+                cancelAnimationFrame(animationId);
+            }
+            
+            setTimeout(() => {
+                finalScoreDisplay.textContent = score;
+                gameOverModal.style.display = 'flex';
+                previousScore = score;
+            }, 500);
+        }
+        
+        function resetGame() {
+            gameOverModal.style.display = 'none';
+            gameOver = false;
+            score = 0;
+            gameTime = 25;
+            isFishing = false;
+            scoreDisplay.textContent = '0';
+            document.getElementById('timer').textContent = '25';
+            previousScoreDisplay.textContent = 'Last Score: ' + previousScore;
+            castButton.disabled = false;
+            castButton.textContent = 'Cast Line';
+            fishingLine.style.height = '0px';
+            hook.style.top = '30%';
+            
+            // Clear any remaining fish
+            fishArray.forEach(fishObj => {
+                fishObj.element.remove();
+            });
+            fishArray = [];
+            
+            if (timerInterval) {
+                clearInterval(timerInterval);
+                timerInterval = null;
+            }
+            
+            if (fishSpawnInterval) {
+                clearInterval(fishSpawnInterval);
+                fishSpawnInterval = null;
+            }
+            
+            if (sharkSpawnInterval) {
+                clearInterval(sharkSpawnInterval);
+                sharkSpawnInterval = null;
+            }
+            
+            if (animationId) {
+                cancelAnimationFrame(animationId);
+                animationId = null;
+            }
+        }
+    </script>
+</body>
+</html>

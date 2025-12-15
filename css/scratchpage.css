@@ -1,0 +1,25 @@
+body {
+  font-family: sans-serif ;;
+  text-align: center;
+  list-style-position: inside;
+  background-color: lightcoral;}
+
+head {
+    font-size: xx-large;
+    font-weight: bold;
+    border-bottom: 2px solid black;
+    padding-bottom: 10px;}
+
+h1 {
+    font-size: xxx-large;
+    font-weight: bold;
+    }
+
+ol {
+    font-size: x-large;
+  padding-left: 1px; /* try 20px, 15px, or 10px */
+}
+
+li {
+    font-size: medium;}
+
